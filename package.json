@@ -7,12 +7,18 @@
     "@testing-library/react": "^9.5.0",
     "@testing-library/user-event": "^7.2.1",
     "@types/jest": "^24.9.1",
+    "@types/lodash": "^4.14.150",
     "@types/node": "^12.12.38",
     "@types/react": "^16.9.34",
     "@types/react-dom": "^16.9.7",
+    "@types/styled-components": "^5.1.0",
+    "axios": "^0.19.2",
+    "moment": "^2.25.3",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-scripts": "3.4.1",
+    "react-spring": "^9.0.0-rc.2",
+    "styled-components": "^5.1.0",
     "typescript": "^3.7.5"
   },
   "scripts": {
