@@ -11,23 +11,36 @@ const roles = [
 ]
 
 const Wrapper = styled.div`
-  font-size: 4rem;
-  letter-spacing: -0.2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; 
+  height: 100%;
+  font-size: 2rem;
+  letter-spacing: -0.05em;
   line-height: 1.5;
   font-weight: bold;
-  text-align: center;
-  display: flex;
-  justify-content: center;
   .prof-wrapper {
-    height: ${ 4 * 1.5 }rem;
+    height: ${ 2 * 1.5 }rem;
     overflow: hidden;
     text-align: left;
   }
-  .animate-wrapper {
+  .greet {
+    text-align: center;
+    display: flex;
+    justify-content: center;
+  }
+  .roles {
+    white-space: nowrap;
+  }
+  @media(min-width: 768px) {
+    font-size: 4rem;
+    .prof-wrapper {
+      height: ${ 4 * 1.5 }rem;
+    }
   }
 `;
 
-const Greet = () => {
+const Greet = (props: any) => {
   const toTransform = Array(roles.length - 1)
     .fill('')
     .map((_:string, i: number) => {
@@ -46,13 +59,16 @@ const Greet = () => {
   });
   return (
     <Wrapper>
-      <div>I'm</div>
-      <div className="prof-wrapper">
-        <animated.div className="animate-wrapper" style={animProps}>
-          { roles.map((s: string, i: number) => {
-            return <div key={i}>&nbsp;{s}</div>
-          }) }
-        </animated.div>
+      {props.children}
+      <div className="greet">
+        <div>I'm</div>
+        <div className="prof-wrapper">
+          <animated.div className="animate-wrapper" style={animProps}>
+            { roles.map((s: string, i: number) => {
+              return <div className="roles" key={i}>&nbsp;{s}</div>
+            }) }
+          </animated.div>
+        </div>
       </div>
     </Wrapper>
   );

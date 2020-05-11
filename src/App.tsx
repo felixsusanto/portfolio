@@ -8,70 +8,140 @@ import _ from 'lodash';
  
 const Wrapper = styled.div`
   .bg {
-    min-height: 100vh;
+    position: relative;
+    height: 50vh;
     background: #333;
     background-size: cover;
     background-position: 50%;
+    > div {
+      position: relative;
+      z-index: 1;
+    }
+    .credit {
+      position: absolute;
+      bottom: 10px;
+      width: 100%;
+      padding-left: 10px;
+      text-align: left;
+      a {
+        color: #fff;
+      }
+    }
+    &:after {
+      content: "";
+      display: block;
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 100%;
+      background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFElEQVQYV2NkYGBIY2BgYGCEMtIACCUBNYu1ui0AAAAASUVORK5CYII=) repeat;
+    }
   }
 `;
-/**
- * morning   06.00am - 11.59am (6*60) - (11*60)+59
- * afternoon 00.00pm - 02.59pm 720 - (2*60 + 59)
- * evening   03.00pm - 06.00pm
- */
+
 const timeSegregator = (unit: number) => {
   if (unit >= 6 * 60 && unit <= (11*60)+59) {
-    // morning
+    // morning 6.00 - 11.59 
     return 'morning';
-  } else if(unit <= (2*60+59)+720) {
-    // afternoon
+  } else if(unit <= (14*60)+59) {
+    // afternoon 12.00 - 14.59
     return 'afternoon';
-  } else if(unit <= (6*60)+720) {
-    // evening
+  } else if(unit <= 18*60) {
+    // evening 15.00 - 18.00
     return 'evening';
   } else {
-    // night
+    // night - rest
     return 'night';
   }
 }
 
 type BGState = {
   url?: string;
+  timing?: string;
+  country?: string;
+  photographer?: string;
+  username?: string;
+  isLoading: boolean;
 }
 
 class Background extends React.Component {
   state: BGState = {
-    url: undefined
+    url: undefined,
+    timing: undefined,
+    isLoading: true,
+    photographer: undefined,
+    username: undefined
   };
 
-  componentDidMount() {
-    const timeUnit: number = moment().format('LT')
-      .split(' ')
-      .map((s: string, index: number) => {
-        if (index === 1) {
-          return s === 'PM' ? 720 : 0;
+  dummyCall = () => {
+    return new Promise(resolve => {
+      const r = {
+        country: "Indonesia",
+        data: {
+          urls: {
+            raw: "https://images.unsplash.com/photo-1553895501-af9e282e7fc1?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEwMzQxN30",
+          },
+          user: {
+            name: "Annie Spratt",
+            username: "anniespratt",
+            profile_image: {
+              small: "https://images.unsplash.com/profile-1508107410047-a34950174b6b?ixlib=rb-1.2.1&q=80&fm=jpg&crop=faces&cs=tinysrgb&fit=crop&h=32&w=32"
+            }
+          }
         }
-        const [h, mins] = s.split(':');
-        return (Number(h) * 60) +  Number(mins);
+      };
+      resolve({data: r});
+    });
+  }
+
+  componentDidMount() {
+    const timeUnit: number = moment().format('H:mm')
+      .split(':')
+      .map((n: string, i: number) => {
+        return i === 0 ? +n * 60 : +n;
       })
       .reduce((a,b) => a + b, 0)
-    ;
+    ; 
     const timing = timeSegregator(timeUnit);
-    axios.get(`https://rv8jk9j4eh.execute-api.us-east-1.amazonaws.com/dev/hello?t=${timing}`)
-      .then(r => {
-        const img = _.get(r.data, 'data.results[0].urls.raw');
-        this.setState({url: `${img}&w=1920`});
+    // axios.get(`https://rv8jk9j4eh.execute-api.us-east-1.amazonaws.com/dev/hello?rand=1&cmp=google&t=${timing}`)
+    this.dummyCall()
+      .then((r: any) => {
+        const img = _.get(r.data, 'data.urls.raw');
+        const photographer = _.get(r.data, 'data.user.name');
+        const username = _.get(r.data, 'data.user.username');
+        const country = _.get(r.data, 'country');
+        this.setState({url: `${img}&w=1920`, timing, country, photographer, username});
       })
+      .catch((e) => alert(e))
     ;
   }
 
   render() {
+    const { isLoading, url } = this.state;
     return (
-      typeof this.props.children === 'function' && this.props.children(this.state)
+      <React.Fragment>
+        {isLoading && url && (
+          <img src={url} style={{display: 'none'}} onLoad={() => this.setState({isLoading: false})} alt=""/>
+        )}
+        {typeof this.props.children === 'function' && this.props.children(this.state)}
+      </React.Fragment>
     );
   }
 }
 
+const LoaderText = styled.div`
+  font-size: 4rem;
+  position: absolute;
+  top: 50%;
+  width: 100%;
+  text-align: center;
+  transform: translateY(-50%);
+  font-weight: bold;
+  h1 {
+    font-size: 2rem;
+    font-weight: normal;
+  }
+`;
 
 class App extends React.Component {
   
@@ -83,7 +153,22 @@ class App extends React.Component {
             return (
               <Wrapper>
                 <div className="bg" style={{backgroundImage: `url(${state.url})`}}>
-                  <Greet />
+                  {state.isLoading && (<LoaderText>
+                    Hi There!
+                    <h1>Thanks for stopping by...</h1>
+                  </LoaderText>)}
+                  {!state.isLoading && (
+                    <Greet>
+                      <div>Good {state.timing}, {state.country}</div>
+                    </Greet>
+                  )}
+                  <div className="credit">
+                    <small>
+                      Photo by <a href={`https://unsplash.com/@${state.username}?utm_source=your_app_name&utm_medium=referral`}>
+                        {state.photographer}
+                      </a> on <a href="https://unsplash.com/?utm_source=your_app_name&utm_medium=referral">Unsplash</a>
+                    </small>
+                  </div>
                 </div>
               </Wrapper>
             );
