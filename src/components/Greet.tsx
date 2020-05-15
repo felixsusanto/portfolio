@@ -18,7 +18,7 @@ const Wrapper = styled.div`
   font-size: 2rem;
   letter-spacing: -0.05em;
   line-height: 1.5;
-  font-weight: bold;
+  font-weight: 300;
   .prof-wrapper {
     height: ${ 2 * 1.5 }rem;
     overflow: hidden;
@@ -31,6 +31,7 @@ const Wrapper = styled.div`
   }
   .roles {
     white-space: nowrap;
+    color: #c3e88d;
   }
   @media(min-width: 768px) {
     font-size: 4rem;

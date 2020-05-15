@@ -13,6 +13,7 @@ const Wrapper = styled.div`
     background: #333;
     background-size: cover;
     background-position: 50%;
+    clip-path: polygon(0 0, 100% 0, 100% 92%, 0% 100%);
     > div {
       position: relative;
       z-index: 1;
@@ -34,7 +35,8 @@ const Wrapper = styled.div`
       top: 0;
       bottom: 0;
       width: 100%;
-      background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAFElEQVQYV2NkYGBIY2BgYGCEMtIACCUBNYu1ui0AAAAASUVORK5CYII=) repeat;
+      
+      background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAYAAABytg0kAAAAGElEQVQYV2PU0LVPY2BgYGAEMRgZ/s8EABd4A5BBq/1uAAAAAElFTkSuQmCC) repeat;
     }
   }
 `;
@@ -103,8 +105,10 @@ class Background extends React.Component {
       .reduce((a,b) => a + b, 0)
     ; 
     const timing = timeSegregator(timeUnit);
-    // axios.get(`https://rv8jk9j4eh.execute-api.us-east-1.amazonaws.com/dev/hello?rand=1&cmp=google&t=${timing}`)
+    /*
     this.dummyCall()
+    */
+    axios.get(`https://rv8jk9j4eh.execute-api.us-east-1.amazonaws.com/dev/hello?rand=1&cmp=google&t=${timing}`)
       .then((r: any) => {
         const img = _.get(r.data, 'data.urls.raw');
         const photographer = _.get(r.data, 'data.user.name');
