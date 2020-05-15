@@ -67,7 +67,11 @@ type BGState = {
   isLoading: boolean;
 };
 
-class Background extends React.Component {
+type BGProps = {
+  query: string;
+};
+
+class Background extends React.Component<BGProps> {
   state: BGState = {
     url: undefined,
     timing: undefined,
@@ -111,9 +115,12 @@ class Background extends React.Component {
     /*
     this.dummyCall()
     */
+    const company = this.props.query;
     axios
       .get(
-        `https://rv8jk9j4eh.execute-api.us-east-1.amazonaws.com/dev/hello?rand=1&cmp=google&t=${timing}`
+        `https://rv8jk9j4eh.execute-api.us-east-1.amazonaws.com/dev/hello?rand=1&t=${timing}${
+          company ? '&cmp=' + company : ''
+        }`
       )
       .then((r: any) => {
         const img = _.get(r.data, 'data.urls.raw');
@@ -168,52 +175,56 @@ type RouteParams = {
   company: string;
 };
 
-class Intro extends React.PureComponent<RouteComponentProps<RouteParams>> {
-  render() {
-    return (
-      <Background>
-        {(state: BGState) => {
-          return (
-            <Wrapper>
-              <div
-                className="bg"
-                style={{ backgroundImage: `url(${state.url})` }}
-              >
-                {state.isLoading && (
-                  <LoaderText>
-                    Hi There!
-                    <h1>Thanks for stopping by...</h1>
-                  </LoaderText>
-                )}
-                {!state.isLoading && (
-                  <Greet>
+const Intro: React.FunctionComponent<RouteComponentProps<RouteParams>> = (
+  props
+) => {
+  const company = props.match.params.company;
+  return (
+    <Background query={company}>
+      {(state: BGState) => {
+        return (
+          <Wrapper>
+            <div
+              className="bg"
+              style={{ backgroundImage: `url(${state.url})` }}
+            >
+              {state.isLoading && (
+                <LoaderText>
+                  Hi There!
+                  <h1>Thanks for stopping by...</h1>
+                </LoaderText>
+              )}
+              {!state.isLoading && (
+                <Greet>
+                  {company ? (
+                    <div>Hello, {company}</div>
+                  ) : (
                     <div>
                       Good {state.timing}, {state.country}
                     </div>
-                    <div>Hello, {this.props.match.params.company}</div>
-                  </Greet>
-                )}
-                <div className="credit">
-                  <small>
-                    Photo by{' '}
-                    <a
-                      href={`https://unsplash.com/@${state.username}?utm_source=your_app_name&utm_medium=referral`}
-                    >
-                      {state.photographer}
-                    </a>{' '}
-                    on{' '}
-                    <a href="https://unsplash.com/?utm_source=your_app_name&utm_medium=referral">
-                      Unsplash
-                    </a>
-                  </small>
-                </div>
+                  )}
+                </Greet>
+              )}
+              <div className="credit">
+                <small>
+                  Photo by{' '}
+                  <a
+                    href={`https://unsplash.com/@${state.username}?utm_source=your_app_name&utm_medium=referral`}
+                  >
+                    {state.photographer}
+                  </a>{' '}
+                  on{' '}
+                  <a href="https://unsplash.com/?utm_source=your_app_name&utm_medium=referral">
+                    Unsplash
+                  </a>
+                </small>
               </div>
-            </Wrapper>
-          );
-        }}
-      </Background>
-    );
-  }
-}
+            </div>
+          </Wrapper>
+        );
+      }}
+    </Background>
+  );
+};
 
 export default withRouter(Intro);
