@@ -21,7 +21,7 @@ const Wrapper = styled.div`
     background-color: ${randomColor};
     background-size: cover;
     background-position: 50%;
-    transition: all 1s;
+    transition: all 0.5s ease-in-out 0.2s;
     &.img-shown {
       height: 50vh;
       clip-path: polygon(0 0, 100% 0, 100% 92%, 0% 100%);
@@ -31,7 +31,7 @@ const Wrapper = styled.div`
       z-index: 1;
       &.credit {
         position: absolute;
-        bottom: 10px;
+        bottom: 7%;
         width: 100%;
         padding-left: 10px;
         text-align: left;
@@ -206,9 +206,9 @@ type BlurFilterProps = {
 
 const BlurFilter: React.FunctionComponent<BlurFilterProps> = (props) => {
   const transition = useTransition(props.blur, {
+    config: config.molasses,
     from: {
-      backdropFilter: 'blur(20px)',
-      config: config.molasses
+      backdropFilter: 'blur(20px)'
     },
     enter: { backdropFilter: 'blur(0)' },
     leave: { backdropFilter: 'blur(20px)' }
