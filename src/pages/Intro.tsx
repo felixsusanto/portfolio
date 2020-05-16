@@ -5,29 +5,50 @@ import moment from 'moment';
 import styled from 'styled-components';
 import _ from 'lodash';
 import { withRouter, RouteComponentProps } from 'react-router-dom';
+import { useTransition, animated, config } from 'react-spring';
+import profile from 'assets/profile3.jpg';
+
+const randomColor = () => {
+  const colors = ['#c792ea', '#c3dc6c', '#82aaf3', '#212432'];
+  const index = Math.floor(Math.random() * colors.length);
+  return colors[index];
+};
 
 const Wrapper = styled.div`
   .bg {
     position: relative;
-    height: 50vh;
-    background: #333;
+    height: 100vh;
+    background-color: ${randomColor};
     background-size: cover;
     background-position: 50%;
-    clip-path: polygon(0 0, 100% 0, 100% 92%, 0% 100%);
-    > div {
+    transition: all 1s;
+    &.img-shown {
+      height: 50vh;
+      clip-path: polygon(0 0, 100% 0, 100% 92%, 0% 100%);
+    }
+    > div:not(.blur-filter) {
       position: relative;
       z-index: 1;
-    }
-    .credit {
-      position: absolute;
-      bottom: 10px;
-      width: 100%;
-      padding-left: 10px;
-      text-align: left;
-      a {
-        color: #fff;
+      &.credit {
+        position: absolute;
+        bottom: 10px;
+        width: 100%;
+        padding-left: 10px;
+        text-align: left;
+        a {
+          color: #fff;
+        }
       }
     }
+    > div.blur-filter {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 0;
+    }
+
     &:after {
       content: '';
       display: block;
@@ -65,6 +86,7 @@ type BGState = {
   photographer?: string;
   username?: string;
   isLoading: boolean;
+  minimumLoadScreenTime: boolean;
 };
 
 type BGProps = {
@@ -77,7 +99,8 @@ class Background extends React.Component<BGProps> {
     timing: undefined,
     isLoading: true,
     photographer: undefined,
-    username: undefined
+    username: undefined,
+    minimumLoadScreenTime: false
   };
 
   dummyCall = () => {
@@ -112,6 +135,8 @@ class Background extends React.Component<BGProps> {
       })
       .reduce((a, b) => a + b, 0);
     const timing = timeSegregator(timeUnit);
+
+    setTimeout(() => this.setState({ minimumLoadScreenTime: true }), 5000);
     /*
     this.dummyCall()
     */
@@ -175,55 +200,92 @@ type RouteParams = {
   company: string;
 };
 
+type BlurFilterProps = {
+  blur: boolean;
+};
+
+const BlurFilter: React.FunctionComponent<BlurFilterProps> = (props) => {
+  const transition = useTransition(props.blur, {
+    from: {
+      backdropFilter: 'blur(20px)',
+      config: config.molasses
+    },
+    enter: { backdropFilter: 'blur(0)' },
+    leave: { backdropFilter: 'blur(20px)' }
+  });
+  return transition((style, item) => {
+    return item && <animated.div className="blur-filter" style={style} />;
+  });
+};
+
+const ProfileWrapper = styled.img`
+  border-radius: 50%;
+`;
+
 const Intro: React.FunctionComponent<RouteComponentProps<RouteParams>> = (
   props
 ) => {
   const company = props.match.params.company;
+
   return (
-    <Background query={company}>
-      {(state: BGState) => {
-        return (
-          <Wrapper>
-            <div
-              className="bg"
-              style={{ backgroundImage: `url(${state.url})` }}
-            >
-              {state.isLoading && (
-                <LoaderText>
-                  Hi There!
-                  <h1>Thanks for stopping by...</h1>
-                </LoaderText>
-              )}
-              {!state.isLoading && (
-                <Greet>
-                  {company ? (
-                    <div>Hello, {company}</div>
-                  ) : (
-                    <div>
-                      Good {state.timing}, {state.country}
+    <React.Fragment>
+      <Background query={company}>
+        {(state: BGState) => {
+          const timeToShowImage =
+            !state.isLoading && state.minimumLoadScreenTime;
+          const bgImage = timeToShowImage
+            ? { backgroundImage: `url(${state.url})` }
+            : {};
+
+          return (
+            <Wrapper>
+              <div
+                className={`bg ${timeToShowImage ? 'img-shown' : ''}`}
+                style={bgImage}
+              >
+                {!timeToShowImage && (
+                  <LoaderText>
+                    Hi There!
+                    <h1>Thanks for stopping by...</h1>
+                  </LoaderText>
+                )}
+                {timeToShowImage && (
+                  <React.Fragment>
+                    <Greet>
+                      {company ? (
+                        <div>
+                          Hello, <strong>{company}</strong>
+                        </div>
+                      ) : (
+                        <div>
+                          Good {state.timing}, {state.country}
+                        </div>
+                      )}
+                    </Greet>
+                    <div className="credit">
+                      <small>
+                        Photo by{' '}
+                        <a
+                          href={`https://unsplash.com/@${state.username}?utm_source=felix_personal_portfolio&utm_medium=referral`}
+                        >
+                          {state.photographer}
+                        </a>{' '}
+                        on{' '}
+                        <a href="https://unsplash.com/?utm_source=felix_personal_portfolio&utm_medium=referral">
+                          Unsplash
+                        </a>
+                      </small>
                     </div>
-                  )}
-                </Greet>
-              )}
-              <div className="credit">
-                <small>
-                  Photo by{' '}
-                  <a
-                    href={`https://unsplash.com/@${state.username}?utm_source=your_app_name&utm_medium=referral`}
-                  >
-                    {state.photographer}
-                  </a>{' '}
-                  on{' '}
-                  <a href="https://unsplash.com/?utm_source=your_app_name&utm_medium=referral">
-                    Unsplash
-                  </a>
-                </small>
+                    <BlurFilter blur={timeToShowImage} />
+                  </React.Fragment>
+                )}
               </div>
-            </div>
-          </Wrapper>
-        );
-      }}
-    </Background>
+            </Wrapper>
+          );
+        }}
+      </Background>
+      {/* <ProfileWrapper src={profile} alt="Felix Susanto" /> */}
+    </React.Fragment>
   );
 };
 
