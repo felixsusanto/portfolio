@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Greet from 'components/Greet';
 import axios from 'axios';
 import moment from 'moment';
@@ -23,8 +23,11 @@ const Wrapper = styled.div`
     background-position: 50%;
     transition: all 0.5s ease-in-out 0.2s;
     &.img-shown {
-      height: 50vh;
+      height: 34vh;
       clip-path: polygon(0 0, 100% 0, 100% 92%, 0% 100%);
+      @media (min-width: 768px) {
+        height: 50vh;
+      }
     }
     > div:not(.blur-filter) {
       position: relative;
@@ -136,7 +139,7 @@ class Background extends React.Component<BGProps> {
       .reduce((a, b) => a + b, 0);
     const timing = timeSegregator(timeUnit);
 
-    setTimeout(() => this.setState({ minimumLoadScreenTime: true }), 5000);
+    setTimeout(() => this.setState({ minimumLoadScreenTime: true }), 2000);
     /*
     this.dummyCall()
     */
@@ -183,7 +186,8 @@ class Background extends React.Component<BGProps> {
 }
 
 const LoaderText = styled.div`
-  font-size: 4rem;
+  font-size: 2rem;
+  letter-spacing: -0.05em;
   position: absolute;
   top: 50%;
   width: 100%;
@@ -192,7 +196,10 @@ const LoaderText = styled.div`
   font-weight: bold;
   h1 {
     font-size: 2rem;
-    font-weight: normal;
+    font-weight: 300;
+  }
+  @media (min-width: 768px) {
+    font-size: 4rem;
   }
 `;
 
@@ -220,71 +227,146 @@ const BlurFilter: React.FunctionComponent<BlurFilterProps> = (props) => {
 
 const ProfileWrapper = styled.img`
   border-radius: 50%;
+  width: 150px;
 `;
 
-const Intro: React.FunctionComponent<RouteComponentProps<RouteParams>> = (
-  props
-) => {
-  const company = props.match.params.company;
+type MastheadProps = {
+  company: string;
+  onLoadComplete: () => void;
+};
 
+const Masthead: React.FunctionComponent<MastheadProps> = (props) => {
+  const [isLoaded, setState] = useState(false);
+
+  useEffect(() => {
+    if (isLoaded) props.onLoadComplete();
+    //eslint-disable-next-line
+  }, [isLoaded]);
+  const imageIsLoaded = () => {
+    setState(true);
+  };
+  return (
+    <Background query={props.company}>
+      {(state: BGState) => {
+        const timeToShowImage = !state.isLoading && state.minimumLoadScreenTime;
+        const bgImage = timeToShowImage
+          ? { backgroundImage: `url(${state.url})` }
+          : {};
+
+        return (
+          <Wrapper>
+            <div
+              className={`bg ${timeToShowImage ? 'img-shown' : ''}`}
+              style={bgImage}
+              onTransitionEnd={() => {
+                if (!isLoaded && timeToShowImage) imageIsLoaded();
+              }}
+            >
+              {!timeToShowImage && (
+                <LoaderText>
+                  Hi There!
+                  <h1>Thanks for stopping by...</h1>
+                </LoaderText>
+              )}
+              {timeToShowImage && (
+                <React.Fragment>
+                  <Greet>
+                    {props.company ? (
+                      <div>
+                        Hello, <strong>{props.company}</strong>
+                      </div>
+                    ) : (
+                      <div>
+                        Good {state.timing}, {state.country}
+                      </div>
+                    )}
+                  </Greet>
+                  <div className="credit">
+                    <small>
+                      Photo by{' '}
+                      <a
+                        href={`https://unsplash.com/@${state.username}?utm_source=felix_personal_portfolio&utm_medium=referral`}
+                      >
+                        {state.photographer}
+                      </a>{' '}
+                      on{' '}
+                      <a href="https://unsplash.com/?utm_source=felix_personal_portfolio&utm_medium=referral">
+                        Unsplash
+                      </a>
+                    </small>
+                  </div>
+                  <BlurFilter blur={timeToShowImage} />
+                </React.Fragment>
+              )}
+            </div>
+          </Wrapper>
+        );
+      }}
+    </Background>
+  );
+};
+
+const IntroWrapper = styled.div`
+  color: #bfc7d5;
+  line-height: 1.5;
+  font-size: 14px;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 20px;
+  text-align: left;
+  strong {
+    color: #fff;
+  }
+  .profile {
+    text-align: center;
+  }
+`;
+
+const Intro: React.FC<RouteComponentProps<RouteParams>> = (props) => {
+  const company = props.match.params.company;
+  const [introLoaded, setState] = useState(false);
   return (
     <React.Fragment>
-      <Background query={company}>
-        {(state: BGState) => {
-          const timeToShowImage =
-            !state.isLoading && state.minimumLoadScreenTime;
-          const bgImage = timeToShowImage
-            ? { backgroundImage: `url(${state.url})` }
-            : {};
-
-          return (
-            <Wrapper>
-              <div
-                className={`bg ${timeToShowImage ? 'img-shown' : ''}`}
-                style={bgImage}
-              >
-                {!timeToShowImage && (
-                  <LoaderText>
-                    Hi There!
-                    <h1>Thanks for stopping by...</h1>
-                  </LoaderText>
-                )}
-                {timeToShowImage && (
-                  <React.Fragment>
-                    <Greet>
-                      {company ? (
-                        <div>
-                          Hello, <strong>{company}</strong>
-                        </div>
-                      ) : (
-                        <div>
-                          Good {state.timing}, {state.country}
-                        </div>
-                      )}
-                    </Greet>
-                    <div className="credit">
-                      <small>
-                        Photo by{' '}
-                        <a
-                          href={`https://unsplash.com/@${state.username}?utm_source=felix_personal_portfolio&utm_medium=referral`}
-                        >
-                          {state.photographer}
-                        </a>{' '}
-                        on{' '}
-                        <a href="https://unsplash.com/?utm_source=felix_personal_portfolio&utm_medium=referral">
-                          Unsplash
-                        </a>
-                      </small>
-                    </div>
-                    <BlurFilter blur={timeToShowImage} />
-                  </React.Fragment>
-                )}
-              </div>
-            </Wrapper>
-          );
+      <Masthead
+        company={company}
+        onLoadComplete={() => {
+          setState(true);
         }}
-      </Background>
-      {/* <ProfileWrapper src={profile} alt="Felix Susanto" /> */}
+      />
+      {introLoaded && (
+        <IntroWrapper>
+          <div className="profile">
+            <ProfileWrapper src={profile} alt="Felix Susanto" />
+          </div>
+          <p>
+            My name is <strong>Felix Susanto</strong>
+          </p>
+          <p>Thanks for your time!</p>
+          <p>
+            I'm a self-taught frontend developer who took visual communication
+            &amp; design as my formal education. I had 4 years of working
+            experience doing print design, before take a dive in the world of
+            programming. Started in 2010 as a multimedia designer, I soon
+            discover interest in designing an interactive website, before I know
+            it in 2015 I had change my course of career from designer to a
+            frontend developer.
+          </p>
+          <p>
+            I'd like to say that it's been quite a challenge to jump and explore
+            new teritory. Perhaps my curiosity and drive to always learn
+            something new, enables me in making this transition.
+          </p>
+          <p>
+            Even now, I'm still open to learn and explore new things related to
+            technology.
+          </p>
+          <p>
+            I hope that I can be someone useful to your organization and brings
+            value to the company. If you'd like to find out more about me,
+            please check my portfolio, and resume here.
+          </p>
+        </IntroWrapper>
+      )}
     </React.Fragment>
   );
 };
