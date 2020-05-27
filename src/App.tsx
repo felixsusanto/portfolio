@@ -1,12 +1,16 @@
 import React from 'react';
-import './App.css';
 import Routes from 'routes';
+import Footer from 'components/Footer';
+import { ThemeProvider } from 'styled-components';
+import { theme, GlobalStyle } from 'styles/GlobalStyle';
 
 const App = () => {
   return (
-    <div className="App">
+    <ThemeProvider theme={theme}>
+      <GlobalStyle />
       <Routes />
-    </div>
+      <Footer />
+    </ThemeProvider>
   );
 };
 
